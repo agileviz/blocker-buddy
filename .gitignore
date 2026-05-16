@@ -1,0 +1,17 @@
+# Node.js Tools 
+.ntvs_analysis.dat
+node_modules/
+.DS_Store
+
+# VSTS Extensions
+/dist
+*.vsix
+
+# jest coverage
+/coverage/**
+
+# vs code
+.vscode
+
+# Local Claude Code settings (personal tokens, overrides)
+.claude/settings.local.json

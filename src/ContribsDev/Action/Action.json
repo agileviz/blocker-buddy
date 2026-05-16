@@ -1,0 +1,22 @@
+{
+    "contributions": [
+        {
+            "id": "blocker-buddy-action",
+            "type": "ms.vss-web.action",
+            "description": "(Dev) Mark a work item as blocked or unblocked using Blocker Buddy.",
+            "targets": [
+                "ms.vss-work-web.work-item-context-menu"
+            ],
+            "properties": {
+                "text": "Block / Unblock… (Dev)",
+                "title": "(Dev) Mark this work item as blocked or unblocked using Blocker Buddy",
+                "icon": {
+                    "light": "static/action-icon-light.png",
+                    "dark": "static/action-icon-dark.png"
+                },
+                "uri": "dist/Action/Action.html",
+                "registeredObjectId": "blocker-buddy-action-handler"
+            }
+        }
+    ]
+}

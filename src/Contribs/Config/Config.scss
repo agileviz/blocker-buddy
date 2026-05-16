@@ -1,0 +1,129 @@
+// Blocker Buddy widget configuration pane styles.
+//
+// Imports `_widgetsCommon.scss` for ADO's standard widget-iframe sizing
+// (this is what fixes "stuck in a tiny iframe" — the import gives the body
+// the right flex/scroll behavior to fit ADO's config drawer). Imports the
+// core SCSS for the theme variables ($primary-text, $secondary-text,
+// $neutral-20, $communication-foreground, $error-text) used to match
+// ADO's native form-control styling.
+
+@import "azure-devops-ui/Core/override.scss";
+@import "normalize.css";
+@import "azure-devops-ui/Core/core.scss";
+@import "azure-devops-ui/_widgetsCommon.scss";
+
+body {
+    display: flex;
+    flex-direction: column;
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    overflow-x: hidden;
+}
+
+.bb-config {
+    padding: 16px 0 0 0;
+}
+
+.bb-field-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+}
+
+.bb-label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: $secondary-text;
+}
+
+.bb-input,
+.bb-select {
+    width: 100%;
+    padding: 5px 8px;
+    font-family: inherit;
+    font-size: 14px;
+    color: $primary-text;
+    background-color: var(--background-color, #ffffff);
+    border: 1px solid $neutral-20;
+    border-radius: 2px;
+
+    &:focus {
+        outline: none;
+        border-color: $communication-foreground;
+        box-shadow: 0 0 0 1px $communication-foreground;
+    }
+}
+
+.bb-input.bb-input-error {
+    border-color: $error-text;
+}
+
+.bb-error {
+    color: $error-text;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.bb-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+
+    label {
+        font-size: 14px;
+        color: $primary-text;
+        cursor: pointer;
+    }
+}
+
+// AgileViz pitch + support links in the config pane.
+// Deliberately unboxed — no border, no fill, no container. Reads as publisher
+// content flowing in the pane, not as an ad block. Same convention as Throughput.
+
+.agv-pitch {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.agv-pitch-headline {
+    margin: 0 0 8px 0;
+    color: $primary-text;
+    line-height: 1.35;
+}
+
+.agv-pitch-body {
+    margin: 0 0 12px 0;
+    color: $secondary-text;
+}
+
+.agv-pitch-link-primary,
+.agv-pitch-link-support {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.agv-pitch-link-primary {
+    margin-bottom: 12px;
+}
+
+.agv-link {
+    font-size: inherit;
+    line-height: inherit;
+    color: $communication-foreground;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+        text-decoration: underline;
+    }
+}
+
+.agv-icon-external {
+    display: inline-block;
+    margin-left: 4px;
+    vertical-align: -1px;
+    flex-shrink: 0;
+}

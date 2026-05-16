@@ -1,0 +1,768 @@
+// Blocker Buddy widget body styles.
+//
+// This is the MVP categories surface — a CRUD-on-categories surface that
+// writes through to ExtensionDataService on every action (no save button).
+// Later additions (current-blocked headline, top-categories breakdown,
+// sparkline, etc.) will layer on top of the .bb-widget container.
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+
+.bb-widget {
+    padding: 12px 16px;
+    color: var(--text-primary-color, #333);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    gap: 12px;
+}
+
+.bb-widget-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary-color, #333);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// Hero row: number+descriptor on the left, time-window selector on the
+// right, baseline-aligned. Pulls the hero up into the prime upper-left
+// real-estate (matching ADO's "big number upper-left" convention for
+// metric widgets) while keeping the selector chevron out of ADO's hover
+// hot-zone for widget chrome (Configure / Delete) at the very top-right
+// corner — the dropdown still sits one row down from the title.
+//
+// Margin-bottom adds breathing room before the secondary metrics line so
+// the hero doesn't visually crowd the line below.
+.bb-hero-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+// Used as a left-side spacer when no hero is showing (loading/error/empty
+// states) so the dropdown still right-aligns within the row.
+.bb-hero-spacer {
+    flex: 1 1 auto;
+}
+
+.bb-window-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: transparent;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='6' viewBox='0 0 8 6'><path d='M0 0 L4 6 L8 0 Z' fill='%23999'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 4px center;
+    border: 1px solid var(--palette-neutral-20, #ddd);
+    border-radius: 2px;
+    padding: 2px 16px 2px 6px;
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--text-secondary-color, #666);
+    cursor: pointer;
+    max-width: 110px;
+
+    &:hover {
+        border-color: var(--palette-neutral-30, #ccc);
+        color: var(--text-primary-color, #333);
+    }
+
+    &:focus {
+        outline: none;
+        border-color: var(--communication-foreground, #0078d4);
+        box-shadow: 0 0 0 1px var(--communication-foreground, #0078d4);
+    }
+}
+
+.bb-widget-subtitle {
+    font-size: 11px;
+    color: var(--text-secondary-color, #666);
+    margin-top: -8px;
+}
+
+// ─── Data block (hero + secondary metrics + state copy) ──────────────────
+//
+// One container with state-specific modifier classes (--loading, --error,
+// --empty, --day-zero, --mixed). Each state composes the same primitives
+// (.bb-hero, .bb-secondary-metrics, etc.) — the modifiers exist so future
+// variations like background tint or chart embedding can target a state
+// without re-templating.
+
+// Data block layout — left-aligned, NOT centered.
+//
+// Centering the hero made it dominate the visual hierarchy and biased the
+// reader to interpret "X blockers" below as items rather than periods. The
+// upper-left layout matches ADO's convention for "metric + chart/detail
+// content" widgets (Burndown headline, Cumulative Flow). Bias-reducer
+// dovetails with the "blocked now" vs "blocked periods" vocabulary split:
+// no centered hero acting as gravity well, both metrics are peer info.
+.bb-data-block {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+    gap: 6px;
+    padding: 4px 0 2px 0;
+}
+
+// Empty/error/no-area-paths/needs-config states still benefit from a bit
+// of centering — they have no breakdown rows or chart, so the message
+// reads better with some breathing room. Override the left-align for
+// those specific data-block variants only.
+.bb-data-block--empty,
+.bb-data-block--day-zero,
+.bb-data-block--no-area-paths,
+.bb-data-block--needs-config {
+    align-items: center;
+    text-align: center;
+
+    // Body paragraphs (the explainer text under each state's headline)
+    // are 2-sentence chunks that wrap on narrower widgets. Centered text
+    // wraps into ragged-left lines that read poorly; left-justifying
+    // anchors wrapped lines to a consistent left edge. The headline
+    // above each explainer stays centered.
+    .bb-empty-explainer {
+        text-align: left;
+        align-self: stretch;
+    }
+}
+
+.bb-data-loading {
+    font-size: 12px;
+    color: var(--text-secondary-color, #666);
+    font-style: italic;
+}
+
+.bb-data-error {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--status-error-text, #c42b1c);
+    text-align: left;
+    align-self: stretch;
+}
+
+// Hero pattern matches Throughput's .tp-chart-headline + .tp-chart-headline-
+// unit: outer span carries the number's font-size + weight, the unit nests
+// inside as a smaller span with margin-left:4px. The literal text space
+// between number and unit renders at the parent's 32px size — so the
+// effective gap (~12-14px) scales naturally if the hero size changes.
+//
+// 32px/14px sizing locked 2026-04-30 after a 36→22→32 arc. See
+// feedback_widget_hero_metric_sizing.md for the portfolio convention
+// and the "verify-in-context > convention-chasing" lesson.
+.bb-hero {
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--text-primary-color, #333);
+    font-variant-numeric: tabular-nums;
+}
+
+.bb-hero-label {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-secondary-color, #666);
+    margin-left: 4px;
+}
+
+.bb-secondary-metrics {
+    font-size: 11px;
+    color: var(--text-secondary-color, #666);
+    line-height: 1.4;
+    max-width: 100%;
+}
+
+// ─── Top aggregate-duration chart ────────────────────────────────────────
+//
+// Cumulative blocker-hours-blocked over the window. Filled area underneath
+// at low opacity, stroke on top at full strength — gives the line a crisp
+// profile while the fill carries weight. Sized to fit between the metrics
+// line and the breakdown list. preserveAspectRatio="none" lets the chart
+// stretch horizontally to whatever width the data block allows.
+
+.bb-cum-chart {
+    width: 100%;
+    height: 32px;
+    margin: 4px 0 8px 0;
+    display: block;
+    color: var(--communication-foreground, #0078d4);
+}
+
+.bb-cum-chart-fill {
+    fill: currentColor;
+    opacity: 0.18;
+}
+
+.bb-cum-chart-stroke {
+    stroke: currentColor;
+    stroke-width: 1.25;
+    opacity: 0.85;
+    vector-effect: non-scaling-stroke;
+}
+
+// ─── Category breakdown rows + sparklines ────────────────────────────────
+//
+// Compact two-line rows: bullet on the left, name + metrics on the first
+// line, sparkline below. "Not timed or categorized" structural row uses
+// the outline bullet (○) and skips the sparkline. Tight vertical spacing
+// to fit several rows in a 3×4 widget without clipping.
+
+.bb-cat-breakdown {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+    width: 100%;
+    text-align: left;
+}
+
+.bb-cat-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 13px;
+    line-height: 1.3;
+    color: var(--text-primary-color, #333);
+    position: relative;  // anchor for absolute-positioned .bb-cat-actions overlay
+}
+
+.bb-cat-bullet {
+    flex-shrink: 0;
+    color: var(--communication-foreground, #0078d4);
+    line-height: 1;
+    padding-top: 1px;
+    font-size: 10px;
+}
+
+.bb-cat-bullet--outline {
+    color: var(--text-secondary-color, #888);
+}
+
+.bb-cat-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.bb-cat-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.bb-cat-name {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+// Metrics column: right-aligned with a min-width so the right edge of
+// the text ends at a consistent x across rows (numbers stack visually
+// in a column rather than floating immediately after each category name).
+// Tabular-nums keeps digit widths uniform.
+.bb-cat-metrics {
+    flex: 0 0 auto;
+    min-width: 92px;
+    text-align: right;
+    font-size: 11px;
+    color: var(--text-secondary-color, #888);
+    font-variant-numeric: tabular-nums;
+}
+
+.bb-sparkline {
+    width: 100%;
+    height: 14px;
+    fill: var(--communication-foreground, #0078d4);
+    opacity: 0.6;
+    display: block;
+}
+
+.bb-cat-row--untimed {
+    color: var(--text-secondary-color, #888);
+    // Per design, "Not timed or categorized" stays at the smaller body size
+    // even when categorized rows bump up — it's a structural row, not a
+    // peer in the curated vocabulary.
+    font-size: 12px;
+
+    .bb-cat-name {
+        font-style: italic;
+    }
+}
+
+// State variants: in-config-no-data (curated but quiet) and
+// deleted-with-history (removed from config but markers still in window).
+//
+// Visual hierarchy across the three categorized states:
+//   - active: bullet at full color, name in --text-primary-color, metrics full
+//   - in-config-no-data: bullet at 50% opacity, name in --text-secondary-color,
+//     metrics at 0.8 opacity ("0 · 0 days") → reads as "quiet" without disappearing
+//   - deleted-with-history: whole row at 50% opacity, italic + strikethrough name
+.bb-cat-row--in-config-no-data {
+    .bb-cat-bullet {
+        opacity: 0.5;
+    }
+    .bb-cat-name {
+        color: var(--text-secondary-color, #888);
+    }
+}
+
+.bb-cat-row--deleted-with-history {
+    opacity: 0.5;
+
+    .bb-cat-name {
+        font-style: italic;
+        text-decoration: line-through;
+        text-decoration-thickness: 1px;
+    }
+
+    .bb-cat-bullet {
+        color: var(--text-secondary-color, #888);
+    }
+
+    .bb-sparkline {
+        opacity: 0.4;
+    }
+}
+
+// Used on in-config-no-data rows where metrics render as "0 · 0 days".
+// Drops italic + lifts opacity (vs the older "no recent activity" text
+// styling) so the numerals stay scannable in column-position parity with
+// data-bearing rows. Bullet at 50% opacity (set by .bb-cat-row--in-config-no-data)
+// remains the structural "this row is quiet" signal.
+.bb-cat-metrics--quiet {
+    opacity: 0.8;
+}
+
+// Hover-revealed power affordances. Unlike × (always visible because it's
+// the most-clicked operation and needs to work on touch), the rename / copy
+// / query buttons are quiet by default and only surface on hover OR when
+// any descendant element receives keyboard focus (`:focus-within`).
+//
+// Position: absolute so the actions don't reserve flex space when hidden —
+// previously they stayed in flow at opacity:0 and ate ~50px of name column
+// width, ellipsing the names. With absolute, the row's name column gets
+// full width back. Anchored to the right edge, just left of the always-
+// visible × button. Solid background lets the actions overlay the metrics
+// column on hover without making both visible-but-overlapping at once.
+.bb-cat-actions {
+    position: absolute;
+    top: 0;
+    right: 22px;  // leave room for the always-visible × button
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    background: var(--background-color, #fff);
+    box-shadow: -8px 0 8px var(--background-color, #fff);  // soft fade on the left edge
+    padding: 0 4px;
+    border-radius: 2px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease-out;
+}
+
+// Reveal trigger is the header line specifically — NOT the whole row. The
+// row also contains the sparkline below, and we want sparkline hover to surface
+// the SVG <title> tooltip explaining what the bars represent, not pop the
+// action icons (which would mask intent: "this is informational" vs. "this is
+// where you click"). Header hover still works because .bb-cat-actions lives
+// inside the header, so revealed-and-hovered keeps it visible.
+.bb-cat-header:hover .bb-cat-actions,
+.bb-cat-actions:focus-within,
+.bb-secondary-metrics-row:hover .bb-cat-actions,
+.bb-secondary-metrics-row .bb-cat-actions:focus-within {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+// Secondary-metrics-line variant: same hover-revealed group but anchored
+// to the right edge of the metrics row (no × button to clear room for).
+.bb-secondary-metrics-row {
+    position: relative;
+}
+
+.bb-cat-actions--secondary {
+    right: 0;
+    top: -2px;
+}
+
+.bb-cat-action {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    padding: 1px 4px;
+    font: inherit;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--text-secondary-color, #999);
+    cursor: pointer;
+    border-radius: 2px;
+
+    &:hover {
+        color: var(--communication-foreground, #0078d4);
+        background: var(--palette-neutral-10, rgba(0, 0, 0, 0.06));
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--communication-foreground, #0078d4);
+        outline-offset: 1px;
+        opacity: 1;
+    }
+}
+
+// Inline rename input. Replaces the .bb-cat-name span in-place during
+// rename mode, sized to match so the row layout doesn't jump.
+.bb-cat-rename-input {
+    flex: 1;
+    min-width: 0;
+    padding: 1px 4px;
+    font-family: inherit;
+    font-size: inherit;
+    color: var(--text-primary-color, #333);
+    background: var(--background-color, #fff);
+    border: 1px solid var(--communication-foreground, #0078d4);
+    border-radius: 2px;
+    outline: none;
+}
+
+// Inline × button on category rows. Hover-revealed would be ideal but
+// hover doesn't work on touch devices and ADO dashboards do get used on
+// tablets — keeping it always-visible but visually quiet (matches the
+// muted .bb-cat-metrics weight).
+.bb-cat-delete {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    padding: 0 2px;
+    margin-left: 2px;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1;
+    color: var(--text-secondary-color, #999);
+    cursor: pointer;
+    border-radius: 2px;
+    align-self: center;
+
+    &:hover {
+        color: var(--status-error-text, #c42b1c);
+        background: var(--palette-neutral-10, rgba(0, 0, 0, 0.06));
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--communication-foreground, #0078d4);
+        outline-offset: 1px;
+    }
+}
+
+// Phantom × on the untimed row so its metrics column lines up with the
+// categorized rows above (which all reserve trailing-edge space for the
+// always-visible × delete button). Reuses .bb-cat-delete geometry so the
+// alignment stays correct if the × ever changes size.
+.bb-cat-delete--placeholder {
+    visibility: hidden;
+    pointer-events: none;
+    cursor: default;
+}
+
+// Drop the section divider — the merged list eliminates the data/management
+// boundary. Keep the rule so any stray instance collapses cleanly.
+.bb-section-divider {
+    display: none;
+}
+
+.bb-empty-headline {
+    font-size: 13px;
+    color: var(--text-primary-color, #333);
+    font-weight: 500;
+}
+
+// ─── Section divider ─────────────────────────────────────────────────────
+
+.bb-section-divider {
+    height: 1px;
+    background: var(--palette-neutral-10, rgba(0, 0, 0, 0.08));
+    margin: 4px 0;
+}
+
+// ─── Empty-state explainer + suggestion chips ───────────────────────────
+//
+// The data block uses .bb-empty-explainer for paragraph copy in the empty
+// / day-zero / no-area-paths / needs-config states. Suggestion chips
+// surface only when the team has zero curated categories AND no aggregate
+// data — the bootstrap nudge.
+
+.bb-empty-explainer {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--text-secondary-color, #666);
+}
+
+.bb-suggestion-block {
+    margin-top: 8px;
+    width: 100%;
+    text-align: center;  // sits inside the centered empty-state container
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.bb-suggestion-label {
+    font-size: 11px;
+    color: var(--text-secondary-color, #666);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+// Preview of the suggested categories — shown above the Add button so
+// the user sees what they're agreeing to before clicking. Middot-
+// separated single-line that wraps gracefully on narrow widgets.
+// Inherits center-alignment from .bb-suggestion-block (centered preferred
+// here for visual breathing room — the "decision/decision/decision"
+// parallel construction of v7 categories scans well centered too).
+.bb-suggestion-preview {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-primary-color, #333);
+    max-width: 100%;
+}
+
+// Reversibility hint below the button — small, secondary text. Reduces
+// the "is this permanent?" hesitation by signaling that the user can
+// prune or extend the set after clicking.
+.bb-suggestion-helper {
+    font-size: 11px;
+    color: var(--text-secondary-color, #888);
+    font-style: italic;
+}
+
+.bb-chip {
+    background: transparent;
+    border: 1px dashed var(--palette-neutral-20, #ddd);
+    border-radius: 12px;
+    padding: 3px 10px;
+    font: inherit;
+    font-size: 12px;
+    color: var(--communication-foreground, #0078d4);
+    cursor: pointer;
+
+    &:hover {
+        background: var(--palette-neutral-10, rgba(0, 0, 0, 0.06));
+        border-style: solid;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--communication-foreground, #0078d4);
+        outline-offset: 1px;
+    }
+
+    &[disabled] {
+        cursor: default;
+        opacity: 0.5;
+    }
+}
+
+// Primary variant for "Add all N" — solid background + filled border so
+// it reads as the recommended bulk action without competing with the
+// hero or other prominent UI. Same color family as individual chips so
+// the row reads as a coherent group, just with one anchor that's
+// visually heavier.
+.bb-chip--primary {
+    background: var(--communication-foreground, #0078d4);
+    border-style: solid;
+    border-color: var(--communication-foreground, #0078d4);
+    color: var(--callout-background-color, #fff);
+    font-weight: 500;
+
+    &:hover {
+        filter: brightness(1.1);
+        background: var(--communication-foreground, #0078d4);
+        border-color: var(--communication-foreground, #0078d4);
+    }
+}
+
+// ─── Add-custom row ──────────────────────────────────────────────────────
+
+.bb-add-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;  // breathing room from the breakdown rows above
+}
+
+// Tinted background (--palette-neutral-2 is ADO's "subtle surface" token,
+// already used for input backgrounds in Dialog.scss) so the input box
+// reads as a clickable surface even before the user clicks. Without the
+// tint, the input is white-on-white against the widget background and
+// only the very-light-grey border distinguishes it — easy to miss.
+.bb-input {
+    flex: 1;
+    padding: 5px 8px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text-primary-color, #333);
+    background-color: var(--palette-neutral-2, rgba(0, 0, 0, 0.04));
+    border: 1px solid var(--palette-neutral-20, #ddd);
+    border-radius: 2px;
+
+    &:focus {
+        outline: none;
+        border-color: var(--communication-foreground, #0078d4);
+        box-shadow: 0 0 0 1px var(--communication-foreground, #0078d4);
+        background-color: var(--background-color, #ffffff);  // flip to white when focused for input contrast
+    }
+
+    &.bb-input-error {
+        border-color: var(--status-error-text, #c42b1c);
+    }
+}
+
+.bb-btn-add {
+    padding: 5px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    color: #fff;
+    background: var(--communication-foreground, #0078d4);
+    border: 1px solid var(--communication-foreground, #0078d4);
+    border-radius: 2px;
+    cursor: pointer;
+
+    &:hover {
+        filter: brightness(1.1);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--communication-foreground, #0078d4);
+        outline-offset: 2px;
+    }
+
+    &[disabled] {
+        cursor: default;
+        opacity: 0.5;
+    }
+}
+
+// Empty in steady-state; collapse via display:none when there's no error
+// text so we don't reserve 14px + 12px flex gap below the add row at the
+// 2x3 default widget size (just enough to push past the chrome's scroll
+// threshold). Layout shift on first error is small and downward — fine
+// for a rare path. The element gets its natural height back the moment
+// JS sets innerText.
+.bb-error {
+    font-size: 11px;
+    color: var(--status-error-text, #c42b1c);
+
+    &::before {
+        content: '⚠ ';
+        font-weight: 700;
+    }
+
+    &:empty {
+        display: none;
+    }
+}
+
+// ─── Status (transient: saving / error during persist) ───────────────────
+
+.bb-status {
+    font-size: 11px;
+    color: var(--text-secondary-color, #666);
+}
+
+.bb-status--error {
+    color: var(--status-error-text, #c42b1c);
+
+    &::before {
+        content: '⚠ ';
+        font-weight: 700;
+    }
+}
+
+.bb-status--info {
+    color: var(--communication-foreground, #0078d4);
+
+    &::before {
+        content: '✓ ';
+        font-weight: 700;
+    }
+}
+
+// ─── Dev tools (dev VSIX only) ───────────────────────────────────────────
+//
+// Subtle visual treatment — dashed border, small label, monospace buttons —
+// to clearly signal "this is a developer surface, not user-facing." The
+// runtime gate (isDevExtension()) keeps these out of the prod bundle's
+// rendered DOM, but the styles ship either way (they only apply if the
+// elements exist).
+
+.bb-dev-tools {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--palette-neutral-20, #ddd);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bb-dev-tools-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary-color, #888);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.bb-dev-tools-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.bb-btn-dev {
+    background: transparent;
+    border: 1px solid var(--palette-neutral-20, #ddd);
+    border-radius: 2px;
+    padding: 3px 8px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--text-secondary-color, #666);
+    cursor: pointer;
+
+    &:hover {
+        background: var(--palette-neutral-10, rgba(0, 0, 0, 0.04));
+        border-color: var(--palette-neutral-30, #ccc);
+        color: var(--text-primary-color, #333);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--communication-foreground, #0078d4);
+        outline-offset: 1px;
+    }
+}
+
+// Truncation banner — surfaces when WIQL hit the 20K row cap. Visually
+// distinct from regular content (yellow-amber, italic) so the user
+// knows the totals below are an upper bound, not the real data.
+.bb-truncation-banner {
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--communication-foreground, #92732a);
+    background: var(--palette-neutral-2, rgba(255, 235, 200, 0.5));
+    border-left: 3px solid var(--communication-foreground, #92732a);
+    padding: 4px 8px;
+    margin-bottom: 6px;
+    font-style: italic;
+    border-radius: 2px;
+}

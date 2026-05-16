@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Tag silhouette flipped: body on left, pointed tip on right.
+       Tip now points toward the copy when the icon floats left of the text.
+       Same horizontal aspect ratio as before (~1.6:1, clearly tag-shaped). -->
+  <path d="M 452 290 L 372 200 L 82 200 L 82 380 L 372 380 Z" fill="#0092da"/>
+
+  <!-- Rope hole near the pointed tip — clearly inside the tag body, not a stray dot -->
+  <circle cx="394" cy="290" r="14" fill="white"/>
+
+  <!-- Clock face on the wide left body — single feature, no competing element -->
+  <circle cx="192" cy="290" r="62" fill="white"/>
+
+  <!-- Clock hands at 10:10 — conventional clock-icon time, both hands above center
+       reads as "smile" / time-passing rather than the original L-shape -->
+  <line x1="192" y1="290" x2="159" y2="271" stroke="#0092da" stroke-width="10" stroke-linecap="round"/>
+  <line x1="192" y1="290" x2="237" y2="264" stroke="#0092da" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Center pin — anchors the hands -->
+  <circle cx="192" cy="290" r="4" fill="#0092da"/>
+</svg>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g transform="rotate(-7 256 256)">
+    <!-- Top + bottom caps -->
+    <rect x="116" y="80" width="280" height="20" rx="6" fill="#0092da"/>
+    <rect x="116" y="412" width="280" height="20" rx="6" fill="#0092da"/>
+
+    <!-- Top trapezoid — drawn as its own closed shape so the fill/stroke
+         renders correctly (bowtie-with-fill has SVG winding-rule issues). -->
+    <path d="M 140 100 L 372 100 L 268 256 L 244 256 Z"
+          fill="white" stroke="#0092da" stroke-width="14" stroke-linejoin="round"/>
+
+    <!-- Bottom trapezoid — separate closed shape; meets the top at the waist line. -->
+    <path d="M 244 256 L 268 256 L 372 412 L 140 412 Z"
+          fill="white" stroke="#0092da" stroke-width="14" stroke-linejoin="round"/>
+
+    <!-- Top sand: settled at the bottom of the upper trapezoid, edges flush with walls -->
+    <path d="M 220 220 L 292 220 L 268 256 L 244 256 Z" fill="#4FC1EA"/>
+
+    <!-- Falling stream: from the waist down to the top of the bottom pile -->
+    <rect x="252" y="256" width="8" height="84" rx="2" fill="#4FC1EA"/>
+
+    <!-- Bottom sand: pentagonal pile, edges flush with walls partway up + center peak -->
+    <path d="M 145 405 L 221 290 L 256 275 L 291 290 L 367 405 Z" fill="#4FC1EA"/>
+  </g>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Lift handle / chevron at top — communicates "deliberately lifted" rather than "broken" -->
+  <path d="M 226 80 L 256 50 L 286 80" fill="none" stroke="#0092da" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="256" y1="50" x2="256" y2="100" stroke="#0092da" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- Gate panel — clearly rectangular, slats inside reading as "gate" not generic block -->
+  <rect x="130" y="110" width="252" height="200" rx="6" fill="#0092da"/>
+  <g stroke="white" stroke-width="4" opacity="0.45">
+    <line x1="148" y1="155" x2="364" y2="155"/>
+    <line x1="148" y1="195" x2="364" y2="195"/>
+    <line x1="148" y1="235" x2="364" y2="235"/>
+    <line x1="148" y1="275" x2="364" y2="275"/>
+  </g>
+
+  <!-- Side rails (gate posts) — anchor the lifted gate so the gap reads as deliberate -->
+  <rect x="100" y="110" width="14" height="320" rx="4" fill="#0092da"/>
+  <rect x="398" y="110" width="14" height="320" rx="4" fill="#0092da"/>
+
+  <!-- Ground baseline -->
+  <line x1="60" y1="430" x2="452" y2="430" stroke="#0092da" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Water surging through the gap, two layers (close + far) for depth without 128px-density risk -->
+  <path d="M 100 400 Q 170 378 240 400 Q 310 422 380 400 Q 405 392 412 396"
+        fill="none" stroke="#4FC1EA" stroke-width="20" stroke-linecap="round" opacity="0.85"/>
+  <path d="M 80 370 Q 170 348 260 370 Q 350 392 432 370"
+        fill="none" stroke="#4FC1EA" stroke-width="14" stroke-linecap="round" opacity="0.55"/>
+</svg>

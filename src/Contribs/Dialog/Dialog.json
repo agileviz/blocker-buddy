@@ -1,0 +1,15 @@
+{
+    "contributions": [
+        {
+            "id": "blocker-buddy-dialog",
+            "type": "ms.vss-web.action",
+            "description": "Blocker Buddy block/unblock dialog content (loaded via openCustomDialog from the action handler).",
+            "targets": [],
+            "properties": {
+                "name": "Blocker Buddy Dialog",
+                "uri": "dist/Dialog/Dialog.html",
+                "registeredObjectId": "blocker-buddy-dialog"
+            }
+        }
+    ]
+}

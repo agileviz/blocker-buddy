@@ -1,0 +1,14 @@
+{
+    "contributions": [
+        {
+            "id": "blocker-buddy-configuration",
+            "type": "ms.vss-dashboards-web.widget-configuration",
+            "targets": ["ms.vss-dashboards-web.widget-configuration"],
+            "properties": {
+                "name": "Blocker Buddy Configuration",
+                "description": "Configure team blocker tag, blocker categories, and member edit permissions.",
+                "uri": "dist/Config/Config.html"
+            }
+        }
+    ]
+}
