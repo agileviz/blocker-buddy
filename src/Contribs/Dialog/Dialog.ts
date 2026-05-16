@@ -346,9 +346,7 @@ function renderUnblockState(): void {
     const root = el("root");
     if (!root) return;
     const orig = state.latestBlockMarker;
-    const origText = orig?.category
-        ? `${orig.category}${orig.context ? ` — ${orig.context}` : ""}`
-        : "(unrecorded)";
+    const origText = orig?.category || "(unrecorded)";
     // Pre-click duration: answers "how long has this been blocked" without
     // committing to unblock. Common usage pattern is "check duration, then
     // Cancel." Hidden when the marker date wasn't captured (defensive — the
