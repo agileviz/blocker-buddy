@@ -305,8 +305,6 @@ export async function postComment(workItemId: number, text: string): Promise<Pos
         body: JSON.stringify({ text })
     });
     if (!res.ok) {
-        const detail = await res.text().catch(() => "");
-        if (detail) console.error("[BlockerBuddy] postComment failed body:", detail.slice(0, 300));
         throw new Error(`Failed to post comment (status ${res.status})`);
     }
     return await res.json();
@@ -339,8 +337,6 @@ async function fetchCommentsV3(
         }
     });
     if (!res.ok) {
-        const detail = await res.text().catch(() => "");
-        if (detail) console.error("[BlockerBuddy] fetchCommentsV3 failed body:", detail.slice(0, 300));
         throw new Error(`Failed to fetch comments (status ${res.status})`);
     }
     const data: V3CommentsResponse = await res.json();
