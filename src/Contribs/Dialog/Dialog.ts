@@ -1,17 +1,13 @@
 // Blocker Buddy dialog content. Loaded via openCustomDialog from Action.ts.
 //
 // Renders one of these states based on the work item + team config:
-//   - Block flow: item not currently tagged → form with Category + Context
+//   - Block flow: item not currently tagged → category selector form
 //   - Unblock flow (with marker): item tagged + recent BlockerBuddy block marker
-//     → unblock confirmation with original-blocker context + optional resolution
+//     → unblock confirmation showing the original-blocker category
 //   - Tagged-but-uncategorized flow: item tagged but no marker → unblock-only,
 //     no-marker-write flow (per project_blocker_buddy_design.md)
 //   - Empty config: no team categories yet → setup-instructions screen
 //     (role-differentiated for admin vs non-admin)
-//
-// V1 first iteration scope: Block flow fully wired (build marker, post comment,
-// add tag, success state). Unblock + tagged-but-uncategorized currently render
-// placeholder messages — full implementations follow.
 
 import "./Dialog.scss";
 import * as SDK from "azure-devops-extension-sdk";
@@ -90,7 +86,7 @@ interface DialogState {
     isCurrentlyBlocked: boolean;
     hasMarker: boolean;
     /** createdDate captured so the unblock success summary can show duration. */
-    latestBlockMarker?: { category?: string; context?: string; createdDate?: Date };
+    latestBlockMarker?: { category?: string; createdDate?: Date };
     /** Optional stages overlay — when present, takes over the dialog body during op. */
     view?: DialogStagesView;
 }
@@ -206,7 +202,7 @@ async function loadState(workItemId: number): Promise<void> {
     const isCurrentlyBlocked = currentTags.some(t => t.toLowerCase() === tagLower);
 
     let hasMarker = false;
-    let latestBlockMarker: { category?: string; context?: string; createdDate?: Date } | undefined;
+    let latestBlockMarker: { category?: string; createdDate?: Date } | undefined;
 
     if (isCurrentlyBlocked) {
         // Look at recent comments for the latest BlockerBuddy block marker.
@@ -220,7 +216,6 @@ async function loadState(workItemId: number): Promise<void> {
                 hasMarker = true;
                 latestBlockMarker = {
                     category: parsed.category,
-                    context: parsed.context,
                     createdDate: c.createdDate
                 };
                 break;
@@ -381,7 +376,7 @@ async function handleUnblockSubmit(): Promise<void> {
     const tagName = state.config.tagName;
     const workItemId = state.workItemId;
     const orig = state.latestBlockMarker;
-    const marker = buildUnblockMarker(orig?.category, orig?.context);
+    const marker = buildUnblockMarker(orig?.category);
     const blockStart = orig?.createdDate;
 
     await runStages(
@@ -484,23 +479,6 @@ function renderDirtyFormWarning(): void {
         </div>
     `;
     el<HTMLButtonElement>("bb-cancel")?.addEventListener("click", () => closeDialog());
-}
-
-// Briefly show the confirmation, then close ourselves. The user just clicked
-// the primary action — they don't need to also click "Done" or hunt for an X.
-// On the rare case the host close handle isn't available, closeDialog falls
-// back to dimming, and the success message stays visible.
-const SUCCESS_AUTOCLOSE_MS = 1500;
-
-function renderSuccess(msg: string): void {
-    const root = el("root");
-    if (!root) return;
-    root.innerHTML = `
-        <div class="bb-dialog">
-            <p class="bb-success">${escapeText(msg)}</p>
-        </div>
-    `;
-    setTimeout(() => closeDialog(), SUCCESS_AUTOCLOSE_MS);
 }
 
 // ─── Stages view (in-modal progress) ────────────────────────────────────

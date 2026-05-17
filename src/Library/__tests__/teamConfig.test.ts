@@ -293,89 +293,36 @@ describe("validateCategoryName", () => {
 });
 
 describe("buildBlockMarker", () => {
-    test("category only — no context", () => {
+    test("category marker", () => {
         expect(buildBlockMarker("PM decision")).toBe("BlockerBuddy: Blocked - PM decision");
     });
 
-    test("category + context joined by ' | '", () => {
-        expect(buildBlockMarker("PM decision", "Greg specifically")).toBe(
-            "BlockerBuddy: Blocked - PM decision | Greg specifically"
-        );
+    test("sanitizes parens in category (paren chars collide with unblock marker wrapping)", () => {
+        expect(buildBlockMarker("(API team) issue")).toBe("BlockerBuddy: Blocked - API team issue");
     });
 
-    test("Other category with required context", () => {
-        expect(buildBlockMarker("Other", "legacy migration timing")).toBe(
-            "BlockerBuddy: Blocked - Other | legacy migration timing"
-        );
-    });
-
-    test("sanitizes parens in category and context", () => {
-        expect(buildBlockMarker("(API team) issue", "(critical)")).toBe(
-            "BlockerBuddy: Blocked - API team issue | critical"
-        );
-    });
-
-    test("sanitizes pipes in inputs", () => {
-        expect(buildBlockMarker("a|b", "c|d")).toBe("BlockerBuddy: Blocked - a b | c d");
-    });
-
-    test("treats undefined/empty context as no-context form", () => {
-        expect(buildBlockMarker("PM decision", undefined)).toBe("BlockerBuddy: Blocked - PM decision");
-        expect(buildBlockMarker("PM decision", "")).toBe("BlockerBuddy: Blocked - PM decision");
-        expect(buildBlockMarker("PM decision", "   ")).toBe("BlockerBuddy: Blocked - PM decision");
+    test("sanitizes pipes in category (defensive hygiene)", () => {
+        expect(buildBlockMarker("a|b")).toBe("BlockerBuddy: Blocked - a b");
     });
 });
 
 describe("buildUnblockMarker", () => {
-    test("no original, no resolution", () => {
+    test("bare unblock (no original category)", () => {
         expect(buildUnblockMarker()).toBe("BlockerBuddy: Unblocked");
-        expect(buildUnblockMarker(undefined, undefined, undefined)).toBe("BlockerBuddy: Unblocked");
+        expect(buildUnblockMarker(undefined)).toBe("BlockerBuddy: Unblocked");
     });
 
-    test("original category only", () => {
+    test("unblock with original category in parens", () => {
         expect(buildUnblockMarker("PM decision")).toBe("BlockerBuddy: Unblocked (PM decision)");
     });
 
-    test("original category + context (pipe inserted structurally)", () => {
-        expect(buildUnblockMarker("PM decision", "Greg specifically")).toBe(
-            "BlockerBuddy: Unblocked (PM decision | Greg specifically)"
-        );
+    test("sanitizes parens out of original category", () => {
+        expect(buildUnblockMarker("(weird)")).toBe("BlockerBuddy: Unblocked (weird)");
     });
 
-    test("original category + resolution", () => {
-        expect(buildUnblockMarker("PM decision", undefined, "PM responded")).toBe(
-            "BlockerBuddy: Unblocked (PM decision) - PM responded"
-        );
-    });
-
-    test("full form: category + context + resolution", () => {
-        expect(buildUnblockMarker("PM decision", "Greg specifically", "PM responded")).toBe(
-            "BlockerBuddy: Unblocked (PM decision | Greg specifically) - PM responded"
-        );
-    });
-
-    test("resolution only (no original — defensive shape, not a happy path)", () => {
-        // Per design, tagged-but-uncategorized unblock writes no marker. But if
-        // somehow called with resolution alone, we still produce a syntactically
-        // valid marker. Defensive correctness.
-        expect(buildUnblockMarker(undefined, undefined, "PM responded")).toBe("BlockerBuddy: Unblocked - PM responded");
-    });
-
-    test("sanitizes parens out of category", () => {
-        expect(buildUnblockMarker("(weird)", undefined, "with\nnewlines")).toBe(
-            "BlockerBuddy: Unblocked (weird) - with newlines"
-        );
-    });
-
-    test("sanitizes pipes out of category and context (separator is structural)", () => {
-        // User-typed pipes in either field get stripped; the | between cat/ctx
-        // is inserted by buildUnblockMarker itself.
-        expect(buildUnblockMarker("a|b", "c|d")).toBe("BlockerBuddy: Unblocked (a b | c d)");
-    });
-
-    test("empty context with non-empty category produces no-context form", () => {
-        expect(buildUnblockMarker("PM decision", "")).toBe("BlockerBuddy: Unblocked (PM decision)");
-        expect(buildUnblockMarker("PM decision", "   ")).toBe("BlockerBuddy: Unblocked (PM decision)");
+    test("empty/whitespace category produces bare unblock", () => {
+        expect(buildUnblockMarker("")).toBe("BlockerBuddy: Unblocked");
+        expect(buildUnblockMarker("   ")).toBe("BlockerBuddy: Unblocked");
     });
 });
 
@@ -388,66 +335,21 @@ describe("parseMarker", () => {
         expect(parseMarker("BlockerBuddy is great")).toBeNull(); // missing colon-and-event
     });
 
-    test("parses Block, category only", () => {
+    test("parses Block marker with category", () => {
         expect(parseMarker("BlockerBuddy: Blocked - PM decision")).toEqual({
             event: "Blocked",
             category: "PM decision"
         });
     });
 
-    test("parses Block with context", () => {
-        expect(parseMarker("BlockerBuddy: Blocked - PM decision | Greg specifically")).toEqual({
-            event: "Blocked",
-            category: "PM decision",
-            context: "Greg specifically"
-        });
-    });
-
-    test("parses Block with 'Other' category and context", () => {
-        expect(parseMarker("BlockerBuddy: Blocked - Other | legacy migration")).toEqual({
-            event: "Blocked",
-            category: "Other",
-            context: "legacy migration"
-        });
-    });
-
-    test("parses Unblock, no original, no resolution", () => {
+    test("parses bare Unblock marker (no original category)", () => {
         expect(parseMarker("BlockerBuddy: Unblocked")).toEqual({ event: "Unblocked" });
     });
 
-    test("parses Unblock with original (category only)", () => {
+    test("parses Unblock marker with original category", () => {
         expect(parseMarker("BlockerBuddy: Unblocked (PM decision)")).toEqual({
             event: "Unblocked",
-            originalReason: "PM decision",
             originalCategory: "PM decision"
-        });
-    });
-
-    test("parses Unblock with original (category + context)", () => {
-        expect(parseMarker("BlockerBuddy: Unblocked (PM decision | Greg specifically)")).toEqual({
-            event: "Unblocked",
-            originalReason: "PM decision | Greg specifically",
-            originalCategory: "PM decision",
-            originalContext: "Greg specifically"
-        });
-    });
-
-    test("parses Unblock with original + resolution", () => {
-        expect(parseMarker("BlockerBuddy: Unblocked (PM decision) - PM responded")).toEqual({
-            event: "Unblocked",
-            originalReason: "PM decision",
-            originalCategory: "PM decision",
-            resolution: "PM responded"
-        });
-    });
-
-    test("parses Unblock with original (cat+ctx) + resolution (the full form)", () => {
-        expect(parseMarker("BlockerBuddy: Unblocked (PM decision | Greg specifically) - PM responded")).toEqual({
-            event: "Unblocked",
-            originalReason: "PM decision | Greg specifically",
-            originalCategory: "PM decision",
-            originalContext: "Greg specifically",
-            resolution: "PM responded"
         });
     });
 
@@ -466,28 +368,70 @@ describe("parseMarker", () => {
         expect(parseMarker("This mentions BlockerBuddy: but isn't a marker")).toBeNull();
     });
 
+    test("skips lines over 1000 chars (defense against pathological input — SonarCloud S5852)", () => {
+        // A line longer than 1000 chars can't be a valid marker (real markers
+        // are well under that bound), and bypassing the regex on overlong
+        // lines eliminates any theoretical super-linear backtracking concern.
+        const longLine = "BlockerBuddy: Blocked - " + "a".repeat(1100);
+        expect(parseMarker(longLine)).toBeNull();
+    });
+
+    test("parses Block marker wrapped in <div> (single-line edited comment)", () => {
+        // ADO wraps edited comments in <div> tags. As long as the marker is
+        // the first content inside the wrapper, the parser strips the wrapper
+        // and recognizes the marker. Protects users from silently breaking
+        // their blocker history with benign edits like fixing a typo.
+        expect(parseMarker("<div>BlockerBuddy: Blocked - PM decision</div>")).toEqual({
+            event: "Blocked",
+            category: "PM decision"
+        });
+    });
+
+    test("parses Unblock marker wrapped in <div> with attributes", () => {
+        expect(parseMarker(`<div class="rendered">BlockerBuddy: Unblocked (PM decision)</div>`)).toEqual({
+            event: "Unblocked",
+            originalCategory: "PM decision"
+        });
+    });
+
+    test("parses Block marker with user note on a new line below (multi-line edited comment)", () => {
+        // ADO represents multi-line content as </div><div>; the parser
+        // normalizes those boundaries to newlines, so the marker line and
+        // the user-note line are processed independently.
+        const edited = "<div>BlockerBuddy: Blocked - PM decision</div><div>My note: Greg is following up.</div>";
+        expect(parseMarker(edited)).toEqual({
+            event: "Blocked",
+            category: "PM decision"
+        });
+    });
+
+    test("does NOT parse when user-prepended text pushes marker off-anchor", () => {
+        // The marker must be the FIRST content inside any <div> wrapper. If
+        // a user adds text before the marker on the same line, the regex's
+        // ^BlockerBuddy: anchor correctly fails — this is the right behavior
+        // because the marker is no longer recognizable at the start of its
+        // line.
+        expect(parseMarker("<div>note: BlockerBuddy: Blocked - PM decision</div>")).toBeNull();
+    });
+
     test("round-trips: build then parse for Block", () => {
-        const m = buildBlockMarker("PM decision", "Greg specifically");
+        const m = buildBlockMarker("PM decision");
         const p = parseMarker(m);
         expect(p?.event).toBe("Blocked");
         expect(p?.category).toBe("PM decision");
-        expect(p?.context).toBe("Greg specifically");
     });
 
-    test("round-trips: build then parse for Unblock with original + resolution", () => {
-        const m = buildUnblockMarker("PM decision", "Greg", "PM finally responded");
+    test("round-trips: build then parse for Unblock with original category", () => {
+        const m = buildUnblockMarker("PM decision");
         const p = parseMarker(m);
         expect(p?.event).toBe("Unblocked");
         expect(p?.originalCategory).toBe("PM decision");
-        expect(p?.originalContext).toBe("Greg");
-        expect(p?.resolution).toBe("PM finally responded");
     });
 
     test("round-trips: build then parse for bare Unblock", () => {
         const m = buildUnblockMarker();
         const p = parseMarker(m);
         expect(p?.event).toBe("Unblocked");
-        expect(p?.originalReason).toBeUndefined();
-        expect(p?.resolution).toBeUndefined();
+        expect(p?.originalCategory).toBeUndefined();
     });
 });

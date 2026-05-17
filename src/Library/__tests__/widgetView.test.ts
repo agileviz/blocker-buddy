@@ -11,8 +11,7 @@ import {
     buildTsvRow,
     sanitizeForTsv,
     buildWorkItemUrlPrefix,
-    TSV_HEADER,
-    CategoryRow
+    TSV_HEADER
 } from "../widgetView";
 import { CategoryAggregate } from "../blockerAggregation";
 import { WorkItemBlockerHistory, BlockerInterval } from "../blockerEventTimeline";

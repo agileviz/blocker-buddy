@@ -12,8 +12,6 @@ import {
 } from "azure-devops-extension-api";
 import {
     WorkItemTrackingRestClient,
-    WorkItemComment,
-    CommentSortOrder,
     WorkItemExpand
 } from "azure-devops-extension-api/WorkItemTracking";
 import { JsonPatchOperation } from "azure-devops-extension-api/WebApi";

@@ -21,6 +21,8 @@ Two components are provided: a **context-menu action** to toggle an item between
 - **View by custom query** — drill from any metric to the specific work items behind it, in ADO's native query view.
 - **Right-click to copy as TSV** — per-category or whole-timeframe blocker history, paste-ready for Excel or Google Sheets.
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=agileviz_blocker-buddy&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=agileviz_blocker-buddy)
+
 ## Install
 
 Install from the Azure DevOps Marketplace:
@@ -69,7 +71,9 @@ Blocker Buddy writes a structured marker into each work item's Discussion commen
 
 The category is the only variable in either form — drawn from each team's configured blocker vocabulary. Parser regex: `/^BlockerBuddy:\s*(Blocked|Unblocked)(?:\s*\(([^)]+)\))?(?:\s*-\s*(.+))?$/i`
 
-**Markers must be API-written plain text and never user-edited.** When a user edits a comment in ADO, the platform wraps the new content in `<div>` markup — which breaks both the regex anchor (`^BlockerBuddy:` no longer matches) and the WIQL `CONTAINS WORDS` search that locates blocker-buddy comments across the project. Every block/unblock event is therefore a fresh API write, not an edit of a prior comment.
+**Markers are tolerant of common comment edits.** ADO's UI wraps edited comments in `<div>` tags; the parser normalizes `</div><div>` boundaries to newlines and strips outer `<div>` wrappers from each line before applying the regex. So benign edits — fixing a typo in the marker, adding a note on a new line below it — preserve the blocker history. Edits that *prepend* text or interleave content with the marker correctly fail to parse, since the marker is no longer at the start of its line.
+
+A note on cross-project search: the WIQL `CONTAINS WORDS` query that locates BB markers across a project relies on ADO's content indexing, which may not always match HTML-wrapped (edited) comments. The per-work-item parser used by the widget and the unblock dialog is tolerant either way, so single-item flows always work; project-wide marker scans on edited comments are the only case where the underlying ADO indexing behavior matters.
 
 Before embedding, the category is sanitized: strip `(`, `)`, newlines, tabs, leading/trailing whitespace; cap at ~300 chars. **Don't change the marker format** without re-validating against ADO's comment sanitizer and WIQL `CONTAINS WORDS` behavior — both have non-obvious edge cases (hyphens split tokens; CamelCase doesn't tokenize predictably).
 

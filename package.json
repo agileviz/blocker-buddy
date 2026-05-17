@@ -1,6 +1,6 @@
 {
   "name": "blocker-buddy",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "Blocker tagging — easier, faster, data-rich.",
   "keywords": [
     "Azure DevOps",
@@ -20,7 +20,7 @@
     "clean": "rm -rf ./dist",
     "compile": "npm run clean && webpack --mode production",
     "compile:dev": "npm run clean && webpack --mode development",
-    "lint": "eslint `src/**/*.{ts,tsx}`",
+    "lint": "eslint 'src/**/*.{ts,tsx}'",
     "test": "jest --coverage",
     "test-watch": "jest --watchAll --coverage",
     "serve": "webpack serve --mode development",

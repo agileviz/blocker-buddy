@@ -248,38 +248,25 @@ export function validateCategoryName(
 
 const MARKER_PREFIX = "BlockerBuddy";
 
-export function buildBlockMarker(category: string, context?: string): string {
+export function buildBlockMarker(category: string): string {
     const cat = sanitizeReasonText(category);
-    const ctx = sanitizeReasonText(context);
-    const reason = ctx ? `${cat} | ${ctx}` : cat;
-    return `${MARKER_PREFIX}: Blocked - ${reason}`;
+    return `${MARKER_PREFIX}: Blocked - ${cat}`;
 }
 
 /**
- * Build an unblock marker. Caller passes the original category and context
- * separately (typically from a parseMarker result on the latest block comment)
- * so the function reassembles the `category | context` separator structurally
- * — the user-text fields go through sanitizeReasonText which strips pipes.
+ * Build an unblock marker. Caller passes the original category (typically
+ * from a parseMarker result on the latest block comment) so the marker
+ * structurally records what category was being unblocked.
  *
  * If `originalCategory` is empty/undefined, the marker omits the parenthetical
- * wrapper entirely (used for the "tagged but uncategorized" path, though that
- * path actually writes no marker at all per design — this is here for the
- * defensive case where a caller has only a resolution to record).
+ * wrapper entirely. This is the defensive shape for the "tagged but
+ * uncategorized" unblock path; that path doesn't actually write a marker per
+ * design, but the bare-Unblocked form is still a syntactically valid marker.
  */
-export function buildUnblockMarker(
-    originalCategory?: string,
-    originalContext?: string,
-    resolution?: string
-): string {
+export function buildUnblockMarker(originalCategory?: string): string {
     const cat = sanitizeReasonText(originalCategory);
-    const ctx = sanitizeReasonText(originalContext);
-    const res = sanitizeReasonText(resolution);
     let out = `${MARKER_PREFIX}: Unblocked`;
-    if (cat) {
-        const original = ctx ? `${cat} | ${ctx}` : cat;
-        out += ` (${original})`;
-    }
-    if (res) out += ` - ${res}`;
+    if (cat) out += ` (${cat})`;
     return out;
 }
 
@@ -289,18 +276,10 @@ const MARKER_REGEX = /^BlockerBuddy:\s*(Blocked|Unblocked)(?:\s*\(([^)]+)\))?(?:
 
 export interface ParsedMarker {
     event: "Blocked" | "Unblocked";
-    /** For Blocked: the category portion (before "|") of the reason. */
+    /** For Blocked: the category from the marker. */
     category?: string;
-    /** For Blocked: the context portion (after "|") of the reason. */
-    context?: string;
-    /** For Unblocked: the full original-reason string captured at unblock time. */
-    originalReason?: string;
-    /** For Unblocked: the category portion of the original reason. */
+    /** For Unblocked: the original category captured at unblock time. */
     originalCategory?: string;
-    /** For Unblocked: the context portion of the original reason. */
-    originalContext?: string;
-    /** For Unblocked: optional resolution text after the dash. */
-    resolution?: string;
 }
 
 /**
@@ -310,9 +289,25 @@ export interface ParsedMarker {
  */
 export function parseMarker(commentText: string | undefined | null): ParsedMarker | null {
     if (!commentText) return null;
-    const lines = String(commentText).split(/\r?\n/);
+    // ADO wraps edited comments in <div> tags. To tolerate benign edits (typo
+    // fixes, notes added on a new line below the marker), normalize </div><div>
+    // boundaries to newlines so multi-line edits split cleanly, then strip
+    // leading <div> and trailing </div> from each line before regex matching.
+    // The marker survives as long as it remains the first content inside any
+    // <div> wrapper. Edits that prepend text or interleave content correctly
+    // fail to parse, since the marker is no longer at the start of its line.
+    const normalized = String(commentText).replace(/<\/div>\s*<div\b[^>]*>/gi, "\n");
+    const lines = normalized.split(/\r?\n/);
     for (const line of lines) {
-        const m = line.trim().match(MARKER_REGEX);
+        let trimmed = line.trim();
+        // Defense in depth: cap line length before regex application. Real BB
+        // markers are <300 chars; lines over 1000 chars cannot be valid markers,
+        // and bypassing the regex on them eliminates any theoretical super-linear
+        // backtracking concern (SonarCloud S5852).
+        if (trimmed.length > 1000) continue;
+        // Strip outer <div> wrapper if present.
+        trimmed = trimmed.replace(/^<div\b[^>]*>/i, "").replace(/<\/div>\s*$/i, "");
+        const m = trimmed.match(MARKER_REGEX);
         if (!m) continue;
 
         const eventRaw = m[1];
@@ -324,34 +319,19 @@ export function parseMarker(commentText: string | undefined | null): ParsedMarke
 
         if (event === "Blocked") {
             if (dashContent) {
-                const split = splitReason(dashContent);
-                result.category = split.category;
-                if (split.context !== undefined) result.context = split.context;
+                result.category = dashContent.trim();
             }
         } else {
-            // Unblocked
+            // Unblocked — the paren content holds the original category captured
+            // at unblock time. The regex's dash-group is shared with the Block
+            // path (where it captures category); for Unblock markers the shipping
+            // format never produces dash content, so it's ignored here.
             if (parenContent) {
-                const trimmedOrig = parenContent.trim();
-                result.originalReason = trimmedOrig;
-                const split = splitReason(trimmedOrig);
-                result.originalCategory = split.category;
-                if (split.context !== undefined) result.originalContext = split.context;
-            }
-            if (dashContent) {
-                result.resolution = dashContent.trim();
+                result.originalCategory = parenContent.trim();
             }
         }
 
         return result;
     }
     return null;
-}
-
-function splitReason(s: string): { category: string; context?: string } {
-    const idx = s.indexOf("|");
-    if (idx < 0) return { category: s.trim() };
-    return {
-        category: s.slice(0, idx).trim(),
-        context: s.slice(idx + 1).trim()
-    };
 }

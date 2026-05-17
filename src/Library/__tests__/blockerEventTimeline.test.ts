@@ -75,16 +75,6 @@ describe("buildWorkItemBlockerHistory — single open block", () => {
         expect(h.isCurrentlyBlocked).toBe(true);
     });
 
-    test("Block with context → context captured", () => {
-        const h = buildWorkItemBlockerHistory({
-            workItemId: 1,
-            comments: [comment("BlockerBuddy: Blocked - PM decision | Greg specifically", "2026-04-25T10:00:00Z")],
-            currentlyTagged: true,
-            now: NOW
-        });
-        expect(h.intervals[0].category).toBe("PM decision");
-        expect(h.intervals[0].context).toBe("Greg specifically");
-    });
 });
 
 describe("buildWorkItemBlockerHistory — closed block/unblock pairs", () => {
@@ -107,6 +97,31 @@ describe("buildWorkItemBlockerHistory — closed block/unblock pairs", () => {
         expect(h.isCurrentlyBlocked).toBe(false);
     });
 
+    test("closed block/unblock pair + currently tagged → counts as currently blocked (untimed)", () => {
+        // Real-world scenario this guards: item went through a BB cycle (closed
+        // interval), then the Blocked tag was re-applied without a new BB block
+        // — either a manual board edit, a bulk operation, or the current block
+        // comment was edited and is now invisible to the parser. The board
+        // counts the item as blocked (it has the tag); the BB widget should
+        // agree (untimed since last unblock, but currently blocked). Earlier
+        // logic required `intervals.length === 0` for untimedTagPresent, which
+        // missed this case — the bug surfaced as "6 on board / 5 in BB widget"
+        // discrepancies for items with history.
+        const h = buildWorkItemBlockerHistory({
+            workItemId: 1,
+            comments: [
+                comment("BlockerBuddy: Blocked - PM decision", "2026-04-20T10:00:00Z"),
+                comment("BlockerBuddy: Unblocked (PM decision)", "2026-04-22T15:00:00Z")
+            ],
+            currentlyTagged: true,
+            now: NOW
+        });
+        expect(h.intervals).toHaveLength(1);
+        expect(h.intervals[0].endDate).not.toBeNull();  // closed interval
+        expect(h.untimedTagPresent).toBe(true);  // tag present + no open BB tracking
+        expect(h.isCurrentlyBlocked).toBe(true);  // counted in hero "blocked now"
+    });
+
     test("multiple closed pairs in chronological order", () => {
         const h = buildWorkItemBlockerHistory({
             workItemId: 1,
@@ -114,7 +129,7 @@ describe("buildWorkItemBlockerHistory — closed block/unblock pairs", () => {
                 comment("BlockerBuddy: Blocked - External team dependency", "2026-04-10T09:00:00Z"),
                 comment("BlockerBuddy: Unblocked (External team dependency)", "2026-04-12T09:00:00Z"),
                 comment("BlockerBuddy: Blocked - Missing requirements", "2026-04-20T11:00:00Z"),
-                comment("BlockerBuddy: Unblocked (Missing requirements) - PM filled in spec", "2026-04-23T11:00:00Z")
+                comment("BlockerBuddy: Unblocked (Missing requirements)", "2026-04-23T11:00:00Z")
             ],
             currentlyTagged: false,
             now: NOW
@@ -122,7 +137,6 @@ describe("buildWorkItemBlockerHistory — closed block/unblock pairs", () => {
         expect(h.intervals).toHaveLength(2);
         expect(h.intervals[0].category).toBe("External team dependency");
         expect(h.intervals[1].category).toBe("Missing requirements");
-        expect(h.intervals[1].resolution).toBe("PM filled in spec");
     });
 
     test("re-blocked after unblock — currently open", () => {

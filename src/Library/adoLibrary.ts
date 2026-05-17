@@ -3,21 +3,26 @@ import * as SDK from "azure-devops-extension-sdk";
 import { WorkItemTrackingRestClient, WorkItemBatchGetRequest,
         WorkItem, WorkItemStateColor } from "azure-devops-extension-api/WorkItemTracking";
 
-import { getClient, IProjectPageService, CommonServiceIds } from 'azure-devops-extension-api/Common';
+import { getClient, IProjectPageService, IProjectInfo, CommonServiceIds } from 'azure-devops-extension-api/Common';
 import { CoreRestClient, WebApiTeam, TeamContext } from "azure-devops-extension-api/Core";
 import { WorkRestClient, BacklogLevelConfiguration, TeamSettingsIteration } from "azure-devops-extension-api/Work";
 
-let projectInfoService : any;
-let project : any;
-let workItemTrackingRestClient : any;
+// Module-level lazy state holders for the ADO SDK clients. Definite-assignment
+// asserted (`!`) — `ensureProject()` is contracted to run before any read site,
+// and the call sites in this file all do so. Avoids the `T | undefined` noise
+// of redundant null-checks at every read while keeping the types informative.
+let projectInfoService!: IProjectPageService;
+let project!: IProjectInfo;
+let workItemTrackingRestClient!: WorkItemTrackingRestClient;
 
 async function ensureProject(): Promise<void> {
     if (project && workItemTrackingRestClient) return;
     projectInfoService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
-    project = await projectInfoService.getProject();
-    if (typeof project === "undefined") {
+    const p = await projectInfoService.getProject();
+    if (typeof p === "undefined") {
         throw new Error("Project is undefined");
     }
+    project = p;
     workItemTrackingRestClient = getClient(WorkItemTrackingRestClient);
 }
 
@@ -56,7 +61,7 @@ export async function getWorkItemTypeStates (wit : string) : Promise<Array<WorkI
     const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
     let project = await projectService.getProject();
     if (typeof project === "undefined") project = {name: "", id: ""};
-    let workItemTrackingRestClient = getClient(WorkItemTrackingRestClient);
+    const workItemTrackingRestClient = getClient(WorkItemTrackingRestClient);
 
     return workItemTrackingRestClient.getWorkItemTypeStates(project.id, wit);
 }
@@ -213,5 +218,5 @@ export async function queryWorkItemIds(wiql: string): Promise<Array<number>> {
     const result = await workItemTrackingRestClient.queryByWiql(
         { query: wiql }, project.id, undefined, true
     );
-    return (result.workItems || []).map((wi: any) => wi.id);
+    return (result.workItems || []).map(wi => wi.id);
 }

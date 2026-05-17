@@ -22,10 +22,6 @@ export interface BlockerInterval {
     endDate: Date | null;
     /** Category from the block marker. Empty string if marker had no category text (defensive). */
     category: string;
-    /** Optional context from the block marker (after pipe). */
-    context?: string;
-    /** Optional resolution captured at unblock time. */
-    resolution?: string;
 }
 
 export interface WorkItemBlockerHistory {
@@ -88,14 +84,12 @@ export function buildWorkItemBlockerHistory(input: BuildHistoryInput): WorkItemB
             openInterval = {
                 startDate: comment.createdDate,
                 endDate: null,
-                category: marker.category ?? "",
-                ...(marker.context ? { context: marker.context } : {})
+                category: marker.category ?? ""
             };
         } else {
             // Unblocked
             if (!openInterval) continue;  // orphan unblock — no marker to close; skip
             openInterval.endDate = comment.createdDate;
-            if (marker.resolution) openInterval.resolution = marker.resolution;
             intervals.push(openInterval);
             openInterval = null;
         }
@@ -104,7 +98,16 @@ export function buildWorkItemBlockerHistory(input: BuildHistoryInput): WorkItemB
     if (openInterval) intervals.push(openInterval);
 
     const hasOpenInterval = intervals.length > 0 && intervals[intervals.length - 1].endDate === null;
-    const untimedTagPresent = input.currentlyTagged && intervals.length === 0;
+    // "Untimed tag" means the team's blocker tag is on the item but BB isn't
+    // currently tracking it as an open interval. This covers two real cases:
+    // (a) item was manually tagged without going through BB at all, and
+    // (b) item went through a BB cycle, then the tag was re-applied without
+    //     a new BB block — either by a manual board edit, a bulk operation,
+    //     or because the current BB block comment was edited and is now
+    //     invisible to the parser. In both cases the tag IS on right now;
+    //     BB just isn't timing this period. Counts toward "blocked now"
+    //     because the board agrees the item is blocked.
+    const untimedTagPresent = input.currentlyTagged && !hasOpenInterval;
     const isCurrentlyBlocked = hasOpenInterval || untimedTagPresent;
 
     return {
