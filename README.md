@@ -116,6 +116,8 @@ npm run serve            # webpack-dev-server on https://localhost:3000
 
 Install the dev VSIX into an ADO org you control, then iterate against `npm run serve`. **Self-signed cert acceptance is required once per browser profile:** visit `https://localhost:3000/dist/Action/Action.html` directly and accept the cert warning. Otherwise the iframe fails to load with `ERR_CERT_AUTHORITY_INVALID`, the SDK never registers the action handler, and clicks do nothing.
 
+**Browser note:** use **Safari** for ADO widget testing against the local dev server. Chrome 130+ enforces Private Network Access (PNA) restrictions that block `dev.azure.com` from loading iframes from `localhost`, even with the correct `Access-Control-Allow-Private-Network` response headers.
+
 ## License, contributing, security
 
 - **[LICENSE](LICENSE)** — MIT, with a Trademark Notice for "AgileViz" and AgileViz product names.

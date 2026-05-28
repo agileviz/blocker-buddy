@@ -41,28 +41,11 @@ module.exports = (env, argv) => {
                 },
                 {
                     test: /\.scss$/,
-                    use: ["style-loader", { loader: "css-loader", options: { sourceMap: true } }, "resolve-url-loader", { loader: "sass-loader", options: { sourceMap: true, sassOptions: { quietDeps: true, silenceDeprecations: ["legacy-js-api", "import"] } } }]
+                    use: ["style-loader", { loader: "css-loader", options: { sourceMap: true } }, { loader: "sass-loader", options: { sourceMap: true, sassOptions: { quietDeps: true, silenceDeprecations: ["legacy-js-api", "import"] } } }]
                 },
                 {
                     test: /\.css$/,
                     use: ["style-loader", "css-loader"],
-                },
-                {
-                    test: /\.[woff2|woff]$/,
-                    use: [{
-                        loader: "file-loader",
-                        options: {
-                            name: "fonts/[name].[ext]"
-                        }
-                    }]
-                },
-                {
-                    test: /\.html$/,
-                    loader: "file-loader"
-                },
-                {
-                    test: /\.png$/,
-                    loader: "file-loader"
                 }
             ]
         },

@@ -1,0 +1,7 @@
+{
+    "manifestVersion": 1,
+    "id": "BlockerBuddy-dev",
+    "name": "Blocker Buddy - Dev",
+    "public": false,
+    "baseUri": "https://localhost:3000"
+}
