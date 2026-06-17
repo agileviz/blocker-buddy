@@ -15,3 +15,6 @@ node_modules/
 
 # Local Claude Code settings (personal tokens, overrides)
 .claude/settings.local.json
+
+# Claude Code agent memory (local notes — not for the public repo)
+memory/
