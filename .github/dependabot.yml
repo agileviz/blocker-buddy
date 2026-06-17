@@ -1,0 +1,23 @@
+# Dependabot config — shared pattern across AgileViz repos
+# (throughput / visual-rollup / blocker-buddy; keep in sync — throughput is the lead).
+#
+# This file governs ROUTINE version-update PRs only: weekly, grouped, low-noise.
+# Security vulnerability ALERTS are event-driven and still appear in the Security
+# tab regardless of the schedule below — dismiss dev-only ones there with the
+# reason "Vulnerable code is not actually used" (build/test tooling never ships
+# in the VSIX, which bundles only static/ and dist/).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Runtime deps that can reach the shipped widget — review these closely.
+      production-dependencies:
+        dependency-type: production
+      # Build/test/publish tooling (jest, webpack, ts-jest, tfx-cli, …) — batched
+      # into one PR so it's easy to scan or dismiss together.
+      dev-dependencies:
+        dependency-type: development

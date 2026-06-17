@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      # Informational only: surfaces advisories in the log without failing the
+      # build. Dev-only moderates are triaged/dismissed in the Security tab; the
+      # lint + test steps above are the real gate for Dependabot PRs. Fails the
+      # step (but not the job) only on high/critical so they stay visible.
+      - name: npm audit (informational)
+        run: npm audit --audit-level=high
+        continue-on-error: true
