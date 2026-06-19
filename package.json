@@ -49,7 +49,11 @@
     "sockjs": {
       "uuid": ">=11.1.1"
     },
-    "shell-quote": ">=1.8.4"
+    "shell-quote": ">=1.8.4",
+    "lodash": ">=4.18.1",
+    "@istanbuljs/load-nyc-config": {
+      "js-yaml": ">=4.2.0"
+    }
   },
   "devDependencies": {
     "@eslint/js": "^9.5.0",
