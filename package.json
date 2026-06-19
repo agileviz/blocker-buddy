@@ -40,8 +40,8 @@
     "npm-do-latest-updates": "ncu -u --target latest"
   },
   "dependencies": {
-    "azure-devops-extension-api": "^4.238.0",
-    "azure-devops-extension-sdk": "^4.0.2",
+    "azure-devops-extension-api": "^5.273.0",
+    "azure-devops-extension-sdk": "^5.0.0",
     "azure-devops-ui": "^2.241.0",
     "normalize.css": "^8.0.1"
   },
