@@ -6,6 +6,13 @@
 # tab regardless of the schedule below — dismiss dev-only ones there with the
 # reason "Vulnerable code is not actually used" (build/test tooling never ships
 # in the VSIX, which bundles only static/ and dist/).
+#
+# MAJOR version bumps are excluded on purpose. Grouped cross-major bumps (eslint
+# 8->10, jest 29->30, typescript 5->6, ADO api/sdk v4->v5) break the flat config,
+# peer ranges, and lint — they are deliberate manual migrations, not weekly
+# auto-PRs. Do majors by hand when you choose to. (Trade-off: a security fix that
+# only exists in a new major is also suppressed — currently just the dev-only
+# http-proxy-middleware 3.x case, which we dismiss manually anyway.)
 version: 2
 updates:
   - package-ecosystem: npm
@@ -13,6 +20,9 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       # Runtime deps that can reach the shipped widget — review these closely.
       production-dependencies:
