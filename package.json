@@ -72,7 +72,7 @@
     "style-loader": "^3.3.4",
     "tfx-cli": "^0.23.1",
     "ts-jest": "^29.1.4",
-    "ts-loader": "^9.5.1",
+    "ts-loader": "^9.6.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^7.13.0",
     "webpack": "^5.101.0",
