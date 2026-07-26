@@ -1,24 +1,38 @@
 # Dependabot config — shared pattern across AgileViz repos
 # (throughput / visual-rollup / blocker-buddy; keep in sync — throughput is the lead).
 #
-# This file governs ROUTINE version-update PRs only: weekly, grouped, low-noise.
-# Security vulnerability ALERTS are event-driven and still appear in the Security
-# tab regardless of the schedule below — dismiss dev-only ones there with the
-# reason "Vulnerable code is not actually used" (build/test tooling never ships
-# in the VSIX, which bundles only static/ and dist/).
+# This file governs ROUTINE version-update PRs only: monthly, grouped, low-noise.
+# Dropped from weekly to monthly on 2026-07-25 — the weekly cadence mostly churned
+# dev tooling and its main cost was merge conflicts against hand-written dependency
+# work, twice in one session. Batch routine upgrades by hand instead when you are
+# already in the repo: `npm run npm-check-minor-updates`.
+#
+# Dependabot SECURITY updates were enabled at the same time (they had been off,
+# so advisories produced alerts but never PRs — six high-severity findings sat
+# unnoticed while the weekly PRs bumped webpack and ts-loader). Those are
+# event-driven and independent of the schedule below.
+#
+# Security vulnerability ALERTS also still appear in the Security tab regardless
+# of the schedule — dismiss dev-only ones there with the reason "Vulnerable code
+# is not actually used" (build/test tooling never ships in the VSIX, which
+# bundles only static/ and dist/).
 #
 # MAJOR version bumps are excluded on purpose. Grouped cross-major bumps (eslint
 # 8->10, jest 29->30, typescript 5->6, ADO api/sdk v4->v5) break the flat config,
 # peer ranges, and lint — they are deliberate manual migrations, not weekly
 # auto-PRs. Do majors by hand when you choose to. (Trade-off: a security fix that
-# only exists in a new major is also suppressed — currently just the dev-only
-# http-proxy-middleware 3.x case, which we dismiss manually anyway.)
+# only exists in a new major is also suppressed — these ignore rules apply to
+# Dependabot's security updates too, not just the routine ones. That trade-off
+# came due on 2026-07-25: GHSA-mh99-v99m-4gvg had a fix only in
+# brace-expansion@5.0.8, reachable solely via an eslint 8->10 major, so no
+# Dependabot PR could ever have delivered it. Keep running `npm audit` by hand;
+# it remains the only thing that catches this class.)
 version: 2
 updates:
   - package-ecosystem: npm
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
     open-pull-requests-limit: 5
     ignore:
       - dependency-name: "*"
