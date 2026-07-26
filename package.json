@@ -75,7 +75,7 @@
     "eslint": "^10.8.0",
     "jest": "^30.4.2",
     "npm-check-updates": "^21.0.2",
-    "sass": "^1.77.5",
+    "sass": "^1.102.0",
     "sass-loader": "^17.0.0",
     "style-loader": "^3.3.4",
     "tfx-cli": "^0.23.4",
@@ -83,8 +83,8 @@
     "ts-loader": "^9.6.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.65.0",
-    "webpack": "^5.101.0",
-    "webpack-cli": "^7.0.0",
+    "webpack": "^5.109.0",
+    "webpack-cli": "^7.2.1",
     "webpack-dev-server": "^5.2.4"
   }
 }
