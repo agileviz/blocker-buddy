@@ -17,7 +17,13 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm ci
+      # --ignore-scripts blocks dependency lifecycle scripts (SonarCloud S6505):
+      # a compromised transitive package can otherwise run arbitrary code on the
+      # runner at install time. Nothing here needs them — the only packages with
+      # install scripts are @parcel/watcher (Jest watch mode, unused in CI),
+      # fsevents (darwin-only) and unrs-resolver, whose native binding arrives
+      # as a platform-specific optional dependency rather than via postinstall.
+      - run: npm ci --ignore-scripts
       - run: npm run lint
       - run: npm test
       # Informational only: surfaces advisories in the log without failing the
