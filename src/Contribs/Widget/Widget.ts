@@ -1168,7 +1168,9 @@ function copyToClipboard(text: string): boolean {
     ta.style.opacity = "0";
     document.body.appendChild(ta);
     ta.select();
-    let ok = false;
+    // No initializer: both the try and the catch assign, so seeding `false`
+    // here is dead (ESLint 9's no-useless-assignment flags it).
+    let ok: boolean;
     try {
         ok = document.execCommand("copy");
     } catch {

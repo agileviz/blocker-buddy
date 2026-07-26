@@ -1,7 +1,7 @@
 {
   "name": "blocker-buddy",
   "version": "0.9.5",
-  "description": "Blocker tagging — easier, faster, data-rich.",
+  "description": "Blocker tagging \u2014 easier, faster, data-rich.",
   "keywords": [
     "Azure DevOps",
     "Blocker",
@@ -55,26 +55,34 @@
     "shell-quote": ">=1.8.4",
     "lodash": ">=4.18.1",
     "@istanbuljs/load-nyc-config": {
-      "js-yaml": ">=4.2.0"
+      "js-yaml": ">=4.3.0"
+    },
+    "glob": {
+      "minimatch": ">=10.2.5"
+    },
+    "archiver": {
+      "readdir-glob": ">=3.0.0"
+    },
+    "babel-plugin-istanbul": {
+      "test-exclude": ">=8.0.0"
     }
   },
   "devDependencies": {
-    "@eslint/js": "^9.5.0",
-    "@types/eslint__js": "^8.42.3",
-    "@types/jest": "^29.5.12",
+    "@eslint/js": "^10.0.1",
+    "@types/jest": "^30.0.0",
     "copy-webpack-plugin": "^14.0.0",
     "css-loader": "^7.1.2",
-    "eslint": "^8.57.0",
-    "jest": "^29.7.0",
+    "eslint": "^10.8.0",
+    "jest": "^30.4.2",
     "npm-check-updates": "^21.0.2",
     "sass": "^1.77.5",
     "sass-loader": "^17.0.0",
     "style-loader": "^3.3.4",
-    "tfx-cli": "^0.23.1",
-    "ts-jest": "^29.1.4",
+    "tfx-cli": "^0.23.4",
+    "ts-jest": "^29.4.12",
     "ts-loader": "^9.5.1",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^7.13.0",
+    "typescript-eslint": "^8.65.0",
     "webpack": "^5.101.0",
     "webpack-cli": "^7.0.0",
     "webpack-dev-server": "^5.2.4"
